@@ -51,7 +51,7 @@ class Ui(QDialog, Ui_Dialog):
         self.show()
 
     def pathButtonPressed(self):
-        fs = FileSelector('select yt-dlp location', "Executable Files (*.exe)")
+        fs = FileSelector('select yt-dlp location', filetypes = "Executable Files (*.exe)")
         ytdlp_path = fs.initUI()
         if ytdlp_path == None:
             self.message("yt-dlp location unchanged: " + ("None" if self.ytdlp_path == "" else self.ytdlp_path) + "\n")
@@ -64,7 +64,7 @@ class Ui(QDialog, Ui_Dialog):
             self.cfg.write(configfile)
 
     def ffmpegButtonPressed(self):
-        fs = FileSelector('select ffmpeg location', "Executable Files (*.exe)")
+        fs = FileSelector('select ffmpeg location', filetypes = "Executable Files (*.exe)")
         ffmpeg_path = fs.initUI()
         if ffmpeg_path == None:
             self.message("ffmpeg location unchanged: " + ("Default (will only work if ffmpeg is in your path/same folder as yt-dlp)" if self.ffmpeg_path == "" else self.ffmpeg_path) + "\n")
@@ -77,14 +77,14 @@ class Ui(QDialog, Ui_Dialog):
             self.cfg.write(configfile)
 
     def dlpathButtonPressed(self):
-        fs = FileSelector('select location to download to', "Folders")
+        fs = FileSelector('select location to download to', directory=True)
         download_path = fs.initUI()
         if download_path == None:
             self.message("location to download to unchanged: " + ("None" if self.download_path == "" else self.download_path) + "\n")
             return
 
         self.download_path = download_path
-        self.message("location to download to updated: " + self.ytdlp_path + "\n") # TODO: save to external file
+        self.message("location to download to updated: " + self.download_path + "\n") # TODO: save to external file
 
         self.cfg['DEFAULT']['download_path'] = self.download_path
         with open(self.cfg_name, 'w') as configfile:    # save
@@ -167,7 +167,7 @@ class Ui(QDialog, Ui_Dialog):
         self.currProcess = QProcess()
         self.currProcess.readyReadStandardOutput.connect(self.handle_stdout)
         self.currProcess.readyReadStandardError.connect(self.handle_stderr)
-        #self.currProcess.stateChanged.connect(self.handle_state)
+        self.currProcess.stateChanged.connect(self.handle_state)
         self.currProcess.finished.connect(self.process_finished)
 
     def handle_stderr(self):
@@ -180,14 +180,16 @@ class Ui(QDialog, Ui_Dialog):
         stdout = bytes(data).decode("utf8")
         self.message(stdout)
 
-    # def handle_state(self, state):
-    #     states = {
-    #         QProcess.NotRunning: 'Not running',
-    #         QProcess.Starting: 'Starting',
-    #         QProcess.Running: 'Running',
-    #     }
-    #     state_name = states[state]
-    #     self.message(f"State changed: {state_name}")
+    def handle_state(self, state):
+        if state == QProcess.Starting:
+            return
+        states = {
+            QProcess.NotRunning: 'Complete',
+            # QProcess.Starting: 'Starting',
+            QProcess.Running: 'Running',
+        }
+        state_name = states[state]
+        self.message(f"Command: {state_name} --------------------------------------------------------------")
 
     def process_finished(self):
         self.currProcess = None
@@ -197,7 +199,7 @@ class Ui(QDialog, Ui_Dialog):
 
 
 class FileSelector(QWidget):
-    def __init__(self, title, filetypes):
+    def __init__(self, title, filetypes="", directory=False):
         super().__init__()
         self.title = title
         self.left = 10
@@ -205,6 +207,7 @@ class FileSelector(QWidget):
         self.width = 640
         self.height = 480
         self.filetypes = filetypes
+        self.directory=directory
     
     def initUI(self):
         self.setWindowTitle(self.title)
@@ -212,9 +215,12 @@ class FileSelector(QWidget):
         return self.openFileNameDialog()     
     
     def openFileNameDialog(self):
-        options = QFileDialog.Options()
-        options |= QFileDialog.DontUseNativeDialog
-        fileName, _ = QFileDialog.getOpenFileName(self, self.title, "",self.filetypes, options=options)
+        #options = QFileDialog.Options()
+        #options |= QFileDialog.DontUseNativeDialog
+        if not self.directory:
+            fileName, _ = QFileDialog.getOpenFileName(self, self.title, "", self.filetypes)
+        else:
+            fileName = str(QFileDialog.getExistingDirectory(self, "Select Directory"))
         if fileName:
             return fileName
 
