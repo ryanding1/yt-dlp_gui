@@ -118,9 +118,9 @@ class Ui(QDialog, Ui_Dialog):
 
             argArr.append("-f")
 
-            if video is None:
+            if video == "":
                 argArr.append(audio)
-            elif audio is None:
+            elif audio == "":
                 argArr.append(video)
             else: # both video and audio are not none
                 argArr.append(video + "+" + audio)
