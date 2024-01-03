@@ -144,6 +144,9 @@ class Ui(QDialog, Ui_Dialog):
             if self.ffmpeg_path != "":
                 argArr.extend(["--ffmpeg-location", self.ffmpeg_path])
 
+            if self.download_path != "":
+                argArr.extend(['--output', self.download_path + "/%(title)s.%(ext)s"])
+
             argArr.append("-f")
 
             if video == "":
@@ -154,6 +157,7 @@ class Ui(QDialog, Ui_Dialog):
                 argArr.append(video + "+" + audio)
             
             argArr.append(videoLink)
+
             cmd = "Running command: " + self.ytdlp_path
             for i in argArr:
                 cmd += " " + i
