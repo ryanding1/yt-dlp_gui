@@ -2,22 +2,35 @@ import os
 import sys
 from PyQt5.QtWidgets import QApplication, QWidget, QFileDialog, QDialog
 from PyQt5.QtCore import QProcess
-from PyQt5 import QtGui
-from PyQt5 import uic
+#from PyQt5 import uic
 from design import Ui_Dialog
+from configparser import ConfigParser
 
 class Ui(QDialog, Ui_Dialog):
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, cfg=None, cfg_name=""):
         super(Ui, self).__init__(parent=parent) # Call the inherited classes __init__ method
         self.setupUi(self)
+
+        self.cfg = cfg
+        self.cfg_name = cfg_name
+        self.cfg.read(self.cfg_name)
 
         #self.setWindowIcon(QtGui.QIcon('C:/Users/ryand/Documents/python_stuff/ytdlpgui/weirdlookingpepe.png'))
         #uic.loadUi('C:/Users/ryand/Documents/python_stuff/ytdlpgui/design.ui', self) # Load the .ui file
 
-        # TODO: Read following 3 lines from external file
         self.ytdlp_path = ""
         self.ffmpeg_path = ""
         self.download_path = os.path.dirname(os.path.abspath(sys.argv[0])) # default download path is current directory
+
+        # check if any are in the config file already
+        if (self.cfg.has_option("", "ytdlp_path")):
+            self.ytdlp_path = cfg['DEFAULT']['ytdlp_path']
+
+        if (self.cfg.has_option("", "ffmpeg_path")):
+            self.ffmpeg_path = cfg['DEFAULT']['ffmpeg_path']
+
+        if (self.cfg.has_option("", "download_path")):
+            self.download_path = cfg['DEFAULT']['download_path']
 
         self.message("yt-dlp location: "+ ("None" if self.ytdlp_path == "" else self.ytdlp_path))
         self.message("ffmpeg location: "+ ("Default (will only work if ffmpeg is in your path/same folder as yt-dlp)" if self.ffmpeg_path == "" else self.ffmpeg_path))
@@ -44,7 +57,11 @@ class Ui(QDialog, Ui_Dialog):
             self.message("yt-dlp location unchanged: " + ("None" if self.ytdlp_path == "" else self.ytdlp_path) + "\n")
             return
         self.ytdlp_path = ytdlp_path
-        self.message("yt-dlp location: " + self.ytdlp_path + "\n") # TODO: save to external file
+        self.message("yt-dlp location updated: " + self.ytdlp_path + "\n")
+
+        self.cfg['DEFAULT']['ytdlp_path'] = self.ytdlp_path
+        with open(self.cfg_name, 'w') as configfile:    # save
+            self.cfg.write(configfile)
 
     def ffmpegButtonPressed(self):
         fs = FileSelector('select ffmpeg location', "Executable Files (*.exe)")
@@ -53,7 +70,11 @@ class Ui(QDialog, Ui_Dialog):
             self.message("ffmpeg location unchanged: " + ("Default (will only work if ffmpeg is in your path/same folder as yt-dlp)" if self.ffmpeg_path == "" else self.ffmpeg_path) + "\n")
             return
         self.ffmpeg_path = ffmpeg_path
-        self.message("ffmpeg location: " + self.ffmpeg_path + "\n") # TODO: save to external file
+        self.message("ffmpeg location updated: " + self.ffmpeg_path + "\n")
+
+        self.cfg['DEFAULT']['ffmpeg_path'] = self.ffmpeg_path
+        with open(self.cfg_name, 'w') as configfile:    # save
+            self.cfg.write(configfile)
 
     def dlpathButtonPressed(self):
         fs = FileSelector('select location to download to', "Folders")
@@ -63,7 +84,11 @@ class Ui(QDialog, Ui_Dialog):
             return
 
         self.download_path = download_path
-        self.message("location to download to: " + self.ytdlp_path + "\n") # TODO: save to external file
+        self.message("location to download to updated: " + self.ytdlp_path + "\n") # TODO: save to external file
+
+        self.cfg['DEFAULT']['download_path'] = self.download_path
+        with open(self.cfg_name, 'w') as configfile:    # save
+            self.cfg.write(configfile)
 
     def updateButtonPressed(self):
         err = False
@@ -194,7 +219,8 @@ class FileSelector(QWidget):
             return fileName
 
 if __name__ == '__main__':
+    config = ConfigParser()
     app = QApplication(sys.argv)
-    app.setWindowIcon(QtGui.QIcon('weirdlookingpepe.png'))
-    ex = Ui()
+    ex = Ui(cfg=config, cfg_name = 'ytdlpgui.ini')
+    
     sys.exit(app.exec_())
