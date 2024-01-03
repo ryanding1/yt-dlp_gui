@@ -2,6 +2,7 @@ import os
 import sys
 from PyQt5.QtWidgets import QApplication, QWidget, QFileDialog, QDialog
 from PyQt5.QtCore import QProcess
+from PyQt5 import QtGui
 from PyQt5 import uic
 from design import Ui_Dialog
 
@@ -9,6 +10,8 @@ class Ui(QDialog, Ui_Dialog):
     def __init__(self, parent=None):
         super(Ui, self).__init__(parent=parent) # Call the inherited classes __init__ method
         self.setupUi(self)
+
+        #self.setWindowIcon(QtGui.QIcon('C:/Users/ryand/Documents/python_stuff/ytdlpgui/weirdlookingpepe.png'))
         #uic.loadUi('C:/Users/ryand/Documents/python_stuff/ytdlpgui/design.ui', self) # Load the .ui file
 
         # TODO: Read following 3 lines from external file
@@ -192,5 +195,6 @@ class FileSelector(QWidget):
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
+    app.setWindowIcon(QtGui.QIcon('weirdlookingpepe.png'))
     ex = Ui()
     sys.exit(app.exec_())
